@@ -13,6 +13,8 @@ services:
       - UPLOAD_DIR=/app/uploads
       - LOG_LEVEL=info
       - CORS_ORIGINS=http://localhost:3000
+      - MAX_FILE_SIZE=52428800
+      - MAX_TOTAL_SIZE=104857600
     volumes:
       - blog_db_data:/app/data
       - blog_uploads:/app/uploads
