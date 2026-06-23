@@ -1,0 +1,40 @@
+services:
+  backend:
+    build: ./backend
+    container_name: blog-backend
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - LISTEN_ADDR=:8080
+      - JWT_SECRET=change-me-to-a-random-string-in-production
+      - INITIAL_PASSWORD=admin123
+      - DB_PATH=/app/data/blog.db
+      - UPLOAD_DIR=/app/uploads
+      - LOG_LEVEL=info
+      - CORS_ORIGINS=http://localhost:3000
+    volumes:
+      - blog_db_data:/app/data
+      - blog_uploads:/app/uploads
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  frontend:
+    build: ./frontend
+    container_name: blog-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://backend:8080/api
+      - NEXT_PUBLIC_UPLOADS_URL=http://backend:8080/uploads
+    depends_on:
+      backend:
+        condition: service_healthy
+
+volumes:
+  blog_db_data:
+  blog_uploads:

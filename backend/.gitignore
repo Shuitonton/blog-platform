@@ -1,0 +1,7 @@
+# Backend ignores
+/tmp
+data/
+uploads/
+*.db
+*.db-shm
+*.db-wal

@@ -1,0 +1,7 @@
+# Blog Platform — Project-level ignores
+data/
+uploads/
+*.db
+*.db-shm
+*.db-wal
+.DS_Store
