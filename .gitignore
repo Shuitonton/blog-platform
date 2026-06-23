@@ -7,3 +7,4 @@ uploads/
 .DS_Store
 frontend/node_modules/
 frontend/.next/
+test_e2e.py

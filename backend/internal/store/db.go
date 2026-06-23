@@ -46,35 +46,11 @@ func (s *Store) DB() *sql.DB       { return s.db }
 func (s *Store) Close() error       { slog.Info("closing database"); return s.db.Close() }
 
 func (s *Store) migrate(ctx context.Context) error {
-	// Drop old narrow-table schemas and recreate with data JSON column.
-	// This is safe because we're in development — production would need ALTER TABLE.
+	// Create tables if they don't exist. Existing data is preserved.
+	// Schema changes require manual migration (ALTER TABLE) or a migration tool.
 	migrations := []string{
 		`PRAGMA journal_mode=WAL`,
 		`PRAGMA foreign_keys=ON`,
-
-		// Drop old tables (ignore errors if they don't exist in old format)
-		`DROP TABLE IF EXISTS project_tags`,
-		`DROP TABLE IF EXISTS project_files`,
-		`DROP TABLE IF EXISTS blogger_files`,
-		`DROP TABLE IF EXISTS share_files`,
-		`DROP TABLE IF EXISTS picture_files`,
-		`DROP TABLE IF EXISTS blog_files`,
-		`DROP TABLE IF EXISTS pictures`,
-		`DROP TABLE IF EXISTS projects`,
-		`DROP TABLE IF EXISTS bloggers`,
-		`DROP TABLE IF EXISTS shares`,
-		`DROP TABLE IF EXISTS categories`,
-		`DROP TABLE IF EXISTS blog_tags`,
-		`DROP TABLE IF EXISTS blogs`,
-		`DROP TABLE IF EXISTS snippets`,
-		`DROP TABLE IF EXISTS files`,
-		`DROP TABLE IF EXISTS about`,
-		`DROP TABLE IF EXISTS site_config`,
-		`DROP TABLE IF EXISTS card_styles`,
-		`DROP TABLE IF EXISTS auth`,
-		`DROP TABLE IF EXISTS orphaned_files`,
-
-		// --- Recreate tables ---
 
 		// Settings (JSON singleton)
 		`CREATE TABLE IF NOT EXISTS about (id INTEGER PRIMARY KEY CHECK(id=1), title TEXT NOT NULL DEFAULT '', description TEXT NOT NULL DEFAULT '', content TEXT NOT NULL DEFAULT '', updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now')))`,
@@ -103,7 +79,6 @@ func (s *Store) migrate(ctx context.Context) error {
 		`CREATE TABLE IF NOT EXISTS orphaned_files (file_hash TEXT PRIMARY KEY REFERENCES files(hash), marked_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now')))`,
 
 		// --- JSON-list tables (projects / bloggers / shares / pictures) ---
-		// Store as-is from the frontend to avoid schema mismatch.
 
 		`CREATE TABLE IF NOT EXISTS projects (id TEXT PRIMARY KEY, url TEXT NOT NULL DEFAULT '', data TEXT NOT NULL DEFAULT '{}', sort_order INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now')), updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now')), deleted_at TEXT)`,
 

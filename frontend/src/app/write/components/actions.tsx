@@ -31,11 +31,12 @@ export function WriteActions() {
 		if (!pwdInput.trim()) return
 		try {
 			setSaving(true)
-			const token = await authenticate(pwdInput.trim())
-			setAuth(token)
+			await authenticate(pwdInput.trim())
+			setAuth(pwdInput.trim()) // signal isAuth = true
 			setShowPwdDialog(false)
 			setPwdInput('')
-			toast.success('认证成功')
+			toast.success('认证成功，正在发布...')
+			await onPublish()
 		} catch (err: any) {
 			toast.error(err?.message || '密码错误')
 		} finally {
@@ -44,9 +45,7 @@ export function WriteActions() {
 	}
 
 	const handleCancel = () => {
-		if (!window.confirm('放弃本次修改吗？')) {
-			return
-		}
+		if (!window.confirm('放弃本次修改吗？')) return
 		if (mode === 'edit' && originalSlug) {
 			router.push(`/blog/${originalSlug}`)
 		} else {
@@ -74,7 +73,6 @@ export function WriteActions() {
 	const handleMdFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
 		const file = e.target.files?.[0]
 		if (!file) return
-
 		try {
 			const text = await file.text()
 			updateForm({ md: text })
@@ -88,7 +86,6 @@ export function WriteActions() {
 
 	return (
 		<>
-			{/* 密码登录对话框 */}
 			{showPwdDialog && (
 				<div className='fixed inset-0 z-50 flex items-center justify-center bg-black/40' onClick={() => setShowPwdDialog(false)}>
 					<div className='bg-card rounded-2xl border p-6 shadow-xl' onClick={e => e.stopPropagation()}>
@@ -103,15 +100,10 @@ export function WriteActions() {
 							className='mb-3 w-full rounded-lg border bg-white px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-400'
 						/>
 						<div className='flex justify-end gap-2'>
-							<button
-								onClick={() => setShowPwdDialog(false)}
-								className='rounded-lg border px-4 py-2 text-sm'>
+							<button onClick={() => setShowPwdDialog(false)} className='rounded-lg border px-4 py-2 text-sm'>
 								取消
 							</button>
-							<button
-								onClick={handlePwdSubmit}
-								disabled={saving || !pwdInput.trim()}
-								className='brand-btn rounded-lg px-4 py-2 text-sm'>
+							<button onClick={handlePwdSubmit} disabled={saving || !pwdInput.trim()} className='brand-btn rounded-lg px-4 py-2 text-sm'>
 								{saving ? '验证中...' : '确认'}
 							</button>
 						</div>
@@ -129,21 +121,16 @@ export function WriteActions() {
 						</motion.div>
 
 						<motion.button
-							initial={{ opacity: 0, scale: 0.6 }}
-							animate={{ opacity: 1, scale: 1 }}
-							whileHover={{ scale: 1.05 }}
-							whileTap={{ scale: 0.95 }}
+							initial={{ opacity: 0, scale: 0.6 }} animate={{ opacity: 1, scale: 1 }}
+							whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
 							className='rounded-xl border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-600 transition-colors hover:bg-red-100'
-							disabled={loading}
-							onClick={handleDelete}>
+							disabled={loading} onClick={handleDelete}>
 							删除
 						</motion.button>
 
 						<motion.button
-							whileHover={{ scale: 1.05 }}
-							whileTap={{ scale: 0.95 }}
-							onClick={handleCancel}
-							disabled={saving}
+							whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+							onClick={handleCancel} disabled={saving}
 							className='bg-card rounded-xl border px-4 py-2 text-sm'>
 							取消
 						</motion.button>
@@ -151,33 +138,24 @@ export function WriteActions() {
 				)}
 
 				<motion.button
-					initial={{ opacity: 0, scale: 0.6 }}
-					animate={{ opacity: 1, scale: 1 }}
-					whileHover={{ scale: 1.05 }}
-					whileTap={{ scale: 0.95 }}
+					initial={{ opacity: 0, scale: 0.6 }} animate={{ opacity: 1, scale: 1 }}
+					whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
 					className='bg-card rounded-xl border px-4 py-2 text-sm'
-					disabled={loading}
-					onClick={handleImportMd}>
+					disabled={loading} onClick={handleImportMd}>
 					导入 MD
 				</motion.button>
 				<motion.button
-					initial={{ opacity: 0, scale: 0.6 }}
-					animate={{ opacity: 1, scale: 1 }}
-					whileHover={{ scale: 1.05 }}
-					whileTap={{ scale: 0.95 }}
+					initial={{ opacity: 0, scale: 0.6 }} animate={{ opacity: 1, scale: 1 }}
+					whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
 					className='bg-card rounded-xl border px-6 py-2 text-sm'
-					disabled={loading}
-					onClick={openPreview}>
+					disabled={loading} onClick={openPreview}>
 					预览
 				</motion.button>
 				<motion.button
-					initial={{ opacity: 0, scale: 0.6 }}
-					animate={{ opacity: 1, scale: 1 }}
-					whileHover={{ scale: 1.05 }}
-					whileTap={{ scale: 0.95 }}
+					initial={{ opacity: 0, scale: 0.6 }} animate={{ opacity: 1, scale: 1 }}
+					whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
 					className='brand-btn px-6'
-					disabled={loading}
-					onClick={handleImportOrPublish}>
+					disabled={loading} onClick={handleImportOrPublish}>
 					{buttonText}
 				</motion.button>
 			</ul>

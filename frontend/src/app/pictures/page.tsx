@@ -13,6 +13,7 @@ import UploadDialog from './components/upload-dialog'
 import { apiGet } from '@/lib/api-client'
 import type { ImageItem } from '../projects/components/image-upload-dialog'
 import { useRouter } from 'next/navigation'
+import seedPictures from './list.json'
 
 export interface Picture {
 	id: string
@@ -41,8 +42,14 @@ export default function Page() {
 			if (Array.isArray(data) && data.length > 0) {
 				setPictures(data)
 				setOriginalPictures(data)
+			} else {
+				setPictures(seedPictures as Picture[])
+				setOriginalPictures(seedPictures as Picture[])
 			}
-		}).catch(() => {})
+		}).catch(() => {
+			setPictures(seedPictures as Picture[])
+			setOriginalPictures(seedPictures as Picture[])
+		})
 	}, [])
 
 	const handleUploadSubmit = ({ images, description }: { images: ImageItem[]; description: string }) => {

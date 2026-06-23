@@ -11,6 +11,7 @@ import { useAuthStore } from '@/hooks/use-auth'
 import { useConfigStore } from '@/app/(home)/stores/config-store'
 import { apiGet } from '@/lib/api-client'
 import type { AvatarItem } from './components/avatar-upload-dialog'
+import seedBloggers from './list.json'
 
 export default function Page() {
 	const [bloggers, setBloggers] = useState<Blogger[]>([])
@@ -28,7 +29,8 @@ export default function Page() {
 	useEffect(() => {
 		apiGet<Blogger[]>('/bloggers').then(data => {
 			if (Array.isArray(data) && data.length > 0) { setBloggers(data); setOriginalBloggers(data) }
-		}).catch(() => {})
+			else { setBloggers(seedBloggers as Blogger[]); setOriginalBloggers(seedBloggers as Blogger[]) }
+		}).catch(() => { setBloggers(seedBloggers as Blogger[]); setOriginalBloggers(seedBloggers as Blogger[]) })
 	}, [])
 
 	const handleUpdate = (updated: Blogger, old: Blogger, avatarItem?: AvatarItem) => {

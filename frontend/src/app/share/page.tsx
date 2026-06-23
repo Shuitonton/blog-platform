@@ -11,6 +11,7 @@ import { useAuthStore } from '@/hooks/use-auth'
 import { useConfigStore } from '@/app/(home)/stores/config-store'
 import { apiGet } from '@/lib/api-client'
 import type { LogoItem } from './components/logo-upload-dialog'
+import seedShares from './list.json'
 
 export default function Page() {
 	const [shares, setShares] = useState<Share[]>([])
@@ -28,7 +29,8 @@ export default function Page() {
 	useEffect(() => {
 		apiGet<Share[]>('/shares').then(data => {
 			if (Array.isArray(data) && data.length > 0) { setShares(data); setOriginalShares(data) }
-		}).catch(() => {})
+			else { setShares(seedShares as Share[]); setOriginalShares(seedShares as Share[]) }
+		}).catch(() => { setShares(seedShares as Share[]); setOriginalShares(seedShares as Share[]) })
 	}, [])
 
 	const handleUpdate = (updated: Share, old: Share, logoItem?: LogoItem) => {

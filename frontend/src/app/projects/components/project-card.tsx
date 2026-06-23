@@ -93,12 +93,19 @@ export function ProjectCard({ project, isEditMode = false, onUpdate, onDelete }:
 
 			<div className='flex items-start gap-4'>
 				<div className='group relative'>
-					<img
-						src={localProject.image}
-						alt={localProject.name}
-						className={cn('h-16 w-16 shrink-0 rounded-xl object-cover', canEdit && 'cursor-pointer')}
-						onClick={() => canEdit && setShowImageDialog(true)}
-					/>
+					{localProject.image ? (
+						<img
+							src={localProject.image}
+							alt={localProject.name}
+							className={cn('h-16 w-16 shrink-0 rounded-xl object-cover', canEdit && 'cursor-pointer')}
+							onClick={() => canEdit && setShowImageDialog(true)}
+						/>
+					) : (
+						<div
+							className={cn('bg-secondary/20 h-16 w-16 shrink-0 rounded-xl', canEdit && 'cursor-pointer')}
+							onClick={() => canEdit && setShowImageDialog(true)}
+						/>
+					)}
 					{canEdit && (
 						<div className='pointer-events-none absolute inset-0 flex items-center justify-center rounded-xl bg-black/40 opacity-0 transition-opacity group-hover:opacity-100'>
 							<span className='text-xs text-white'>更换</span>

@@ -11,6 +11,7 @@ import { useAuthStore } from '@/hooks/use-auth'
 import { useConfigStore } from '@/app/(home)/stores/config-store'
 import { apiGet } from '@/lib/api-client'
 import type { ImageItem } from './components/image-upload-dialog'
+import seedProjects from './list.json'
 
 export default function Page() {
 	const [projects, setProjects] = useState<Project[]>([])
@@ -29,8 +30,10 @@ export default function Page() {
 		apiGet<Project[]>('/projects').then(data => {
 			if (Array.isArray(data) && data.length > 0) {
 				setProjects(data); setOriginalProjects(data)
+			} else {
+				setProjects(seedProjects as Project[]); setOriginalProjects(seedProjects as Project[])
 			}
-		}).catch(() => {})
+		}).catch(() => { setProjects(seedProjects as Project[]); setOriginalProjects(seedProjects as Project[]) })
 	}, [])
 
 	const handleUpdate = (updated: Project, old: Project, imageItem?: ImageItem) => {

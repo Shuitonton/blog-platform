@@ -10,6 +10,7 @@ import { useAuthStore } from '@/hooks/use-auth'
 import { useConfigStore } from '@/app/(home)/stores/config-store'
 import { pushSnippets } from './services/push-snippets'
 import { apiGet } from '@/lib/api-client'
+import seedSnippets from './list.json'
 
 export default function Page() {
 	const [snippets, setSnippets] = useState<string[]>([])
@@ -28,7 +29,8 @@ export default function Page() {
 	useEffect(() => {
 		apiGet<string[]>('/snippets').then(data => {
 			if (Array.isArray(data) && data.length > 0) { setSnippets(data); setOriginalSnippets(data) }
-		}).catch(() => {})
+			else { setSnippets(seedSnippets); setOriginalSnippets(seedSnippets) }
+		}).catch(() => { setSnippets(seedSnippets); setOriginalSnippets(seedSnippets) })
 	}, [])
 
 	const currentSnippet = snippets.length > 0 ? snippets[currentIndex % snippets.length] : null
