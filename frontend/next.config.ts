@@ -46,7 +46,16 @@ const nextConfig: NextConfig = {
 				permanent: true
 			}
 		]
-	}
+	},
+
+	async rewrites() {
+		return [
+			{
+				source: '/uploads/:path*',
+				destination: `${process.env.NEXT_PUBLIC_UPLOADS_URL || 'http://localhost:3326/uploads'}/:path*`,
+			},
+		]
+	},
 }
 
 export default nextConfig

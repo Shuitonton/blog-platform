@@ -1,5 +1,5 @@
 'use client'
-import { PropsWithChildren } from 'react'
+import { PropsWithChildren, useEffect } from 'react'
 import { useCenterInit } from '@/hooks/use-center'
 import BlurredBubblesBackground from './backgrounds/blurred-bubbles'
 import NavCard from '@/components/nav-card'
@@ -15,6 +15,20 @@ export default function Layout({ children }: PropsWithChildren) {
 	useSizeInit()
 	const { cardStyles, siteContent, regenerateKey } = useConfigStore()
 	const { maxSM, init } = useSize()
+
+	// Update favicon and avatar when siteContent loads from backend
+	useEffect(() => {
+		const favicon = (siteContent as any).favicon
+		if (favicon) {
+			let link = document.querySelector('link[rel="icon"]') as HTMLLinkElement | null
+			if (!link) {
+				link = document.createElement('link')
+				link.rel = 'icon'
+				document.head.appendChild(link)
+			}
+			link.href = favicon
+		}
+	}, [(siteContent as any).favicon])
 
 	const backgroundImages = (siteContent.backgroundImages ?? []) as Array<{ id: string; url: string }>
 	const currentBackgroundImageId = siteContent.currentBackgroundImageId

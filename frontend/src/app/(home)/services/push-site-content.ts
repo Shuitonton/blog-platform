@@ -33,14 +33,20 @@ export async function pushSiteContent(
 		return result.url
 	}
 
-	// Favicon
+	// Favicon — upload and apply URL to siteContent
 	if (faviconItem?.type === 'file') {
-		await uploadFile('Favicon', faviconItem.file)
+		const url = await uploadFile('Favicon', faviconItem.file)
+		if (url) {
+			;(siteContent as any).favicon = url
+		}
 	}
 
-	// Avatar
+	// Avatar — upload and apply URL to siteContent
 	if (avatarItem?.type === 'file') {
-		await uploadFile('Avatar', avatarItem.file)
+		const url = await uploadFile('Avatar', avatarItem.file)
+		if (url) {
+			;(siteContent as any).avatar = url
+		}
 	}
 
 	// Art images

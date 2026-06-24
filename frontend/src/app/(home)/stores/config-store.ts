@@ -6,12 +6,14 @@ import cardStylesDefault from '@/config/card-styles.json'
 export type SiteContent = typeof siteContentDefault
 export type CardStyles = typeof cardStylesDefault
 
-// 深度合并：backend 中有值的字段覆盖 default，空对象/null 则保留默认值。
+// 深度合并：backend 中有值的字段覆盖 def，空对象/null 则保留默认值。
+// backend 中新增的字段也会保留（如 favicon, avatar）。
 function deepMerge<T extends Record<string, any>>(def: T, backend: any): T {
 	if (!backend || typeof backend !== 'object' || Object.keys(backend).length === 0) {
 		return { ...def }
 	}
-	const result = { ...def }
+	const result = { ...def } as Record<string, any>
+	// 覆盖 default 中已有的 key
 	for (const key of Object.keys(result)) {
 		if (backend[key] !== undefined && backend[key] !== null) {
 			if (typeof result[key] === 'object' && result[key] !== null && !Array.isArray(result[key])) {
@@ -23,7 +25,13 @@ function deepMerge<T extends Record<string, any>>(def: T, backend: any): T {
 			}
 		}
 	}
-	return result
+	// 保留 backend 中有但 default 中没有的新字段
+	for (const key of Object.keys(backend)) {
+		if (!(key in result) && backend[key] !== undefined && backend[key] !== null) {
+			result[key] = backend[key]
+		}
+	}
+	return result as T
 }
 
 interface ConfigStore {

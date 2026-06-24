@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'motion/react'
 import { toast } from 'sonner'
-import GridView, { type Share } from './grid-view'
+import GridView from './grid-view'
+import type { Share } from './components/share-card'
 import CreateDialog from './components/create-dialog'
 import { pushShares } from './services/push-shares'
 import { getAuthToken } from '@/lib/auth'
@@ -73,6 +74,6 @@ export default function Page() {
 				<motion.button whileHover={{scale:1.05}} whileTap={{scale:0.95}} onClick={handleSave} disabled={isSaving} className='brand-btn px-6'>{isSaving?'保存中...':'保存'}</motion.button>
 			</>) : (<>{!hideEditButton && <motion.button whileHover={{scale:1.05}} whileTap={{scale:0.95}} onClick={()=>setIsEditMode(true)} className='rounded-xl border bg-white/60 px-6 py-2 text-sm'>编辑</motion.button>}</>)}
 		</motion.div>
-		{isCreateDialogOpen && <CreateDialog onClose={()=>setIsCreateDialogOpen(false)} onSave={handleSaveShare} />}
+		{isCreateDialogOpen && <CreateDialog share={editingShare} onClose={()=>setIsCreateDialogOpen(false)} onSave={handleSaveShare} />}
 	</>)
 }
