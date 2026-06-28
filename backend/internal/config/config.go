@@ -29,6 +29,7 @@ type Config struct {
 	JWTSecret       string
 	InitialPassword string
 	TokenExpiry     time.Duration
+	TurnstileSecret string
 
 	// CORS
 	CORSOrigins []string
@@ -49,8 +50,9 @@ func Load() (*Config, error) {
 		MaxFilesCount:   getEnvInt("MAX_FILES_COUNT", 20),
 		JWTSecret:       os.Getenv("JWT_SECRET"),
 		InitialPassword: os.Getenv("INITIAL_PASSWORD"),
-		TokenExpiry:     getEnvDuration("TOKEN_EXPIRY", 24*time.Hour),
-		CORSOrigins:     parseCORSOrigins(getEnv("CORS_ORIGINS", "http://localhost:3000")),
+		TokenExpiry:      getEnvDuration("TOKEN_EXPIRY", 24*time.Hour),
+		TurnstileSecret:  os.Getenv("TURNSTILE_SECRET_KEY"),
+		CORSOrigins:      parseCORSOrigins(getEnv("CORS_ORIGINS", "http://localhost:3000")),
 		LogLevel:        parseLogLevel(getEnv("LOG_LEVEL", "info")),
 	}
 

@@ -11,6 +11,8 @@ func SecurityHeaders(next http.Handler) http.Handler {
 		h.Set("X-Frame-Options", "DENY")
 		h.Set("Referrer-Policy", "strict-origin-when-cross-origin")
 		h.Set("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
+		h.Set("Content-Security-Policy",
+			"default-src 'self'; script-src 'self' https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self'; connect-src 'self'; frame-src https://challenges.cloudflare.com")
 		next.ServeHTTP(w, r)
 	})
 }

@@ -51,7 +51,7 @@ func main() {
 	handler.CleanTempDir(cfg.UploadDir + "/tmp")
 
 	// Build handlers.
-	authHandler := handler.NewAuthHandler(st, []byte(cfg.JWTSecret), cfg.InitialPassword, cfg.TokenExpiry)
+	authHandler := handler.NewAuthHandler(st, []byte(cfg.JWTSecret), cfg.InitialPassword, cfg.TokenExpiry, cfg.TurnstileSecret)
 	blogHandler := handler.NewBlogHandler(st, cfg.UploadDir)
 	simpleHandler := handler.NewSimpleHandler(st)
 	uploadHandler := handler.NewUploadHandler(st, cfg.UploadDir)
@@ -81,8 +81,9 @@ func main() {
 	// Static file serving for uploads.
 	r.Handle("/uploads/*", handler.ServeStatic(cfg.UploadDir))
 
-	// Auth route (no auth required).
+	// Auth routes (no auth required).
 	r.With(middleware.RateLimit(10, time.Minute)).Post("/api/auth/login", toHTTPHandler(authHandler.Login))
+	r.With(middleware.RateLimit(30, time.Minute)).Post("/api/verify-turnstile", toHTTPHandler(authHandler.VerifyTurnstile))
 
 	// Protected routes (auth required).
 	r.Group(func(r chi.Router) {

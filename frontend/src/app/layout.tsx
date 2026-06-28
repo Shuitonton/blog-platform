@@ -3,6 +3,7 @@ import '@/styles/globals.css'
 import type { Metadata } from 'next'
 import Layout from '@/layout'
 import Head from '@/layout/head'
+import LayoutClient from './layout-client'
 import siteContent from '@/config/site-content.json'
 
 const {
@@ -49,7 +50,9 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
 					}}
 				/>
 
-				<Layout>{children}</Layout>
+				<LayoutClient>
+					<Layout>{children}</Layout>
+				</LayoutClient>
 			</body>
 		</html>
 	)

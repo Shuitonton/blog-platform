@@ -4,7 +4,7 @@ services:
     container_name: blog-backend
     restart: unless-stopped
     ports:
-      - "8080:8080"
+      - "127.0.0.1:8080:8080"
     environment:
       - LISTEN_ADDR=:8080
       - JWT_SECRET=${JWT_SECRET:?set JWT_SECRET to a random value of at least 32 characters}
@@ -13,6 +13,7 @@ services:
       - UPLOAD_DIR=/app/uploads
       - LOG_LEVEL=info
       - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3000}
+      - TURNSTILE_SECRET_KEY=${TURNSTILE_SECRET_KEY:-}
       - MAX_FILE_SIZE=52428800
       - MAX_TOTAL_SIZE=104857600
     volumes:
@@ -29,10 +30,12 @@ services:
     container_name: blog-frontend
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
     environment:
-      - NEXT_PUBLIC_API_URL=http://backend:8080/api
-      - NEXT_PUBLIC_UPLOADS_URL=http://backend:8080/uploads
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:8080/api}
+      - NEXT_PUBLIC_UPLOADS_URL=${NEXT_PUBLIC_UPLOADS_URL:-http://localhost:8080/uploads}
+      - NEXT_PUBLIC_SITE_URL=${NEXT_PUBLIC_SITE_URL:-http://localhost:3000}
+      - NEXT_PUBLIC_TURNSTILE_SITE_KEY=${NEXT_PUBLIC_TURNSTILE_SITE_KEY:-}
     depends_on:
       backend:
         condition: service_healthy

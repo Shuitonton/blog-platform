@@ -18,7 +18,7 @@ func TestLoginInitializesFromServerPasswordOnly(t *testing.T) {
 	}
 	defer st.Close()
 
-	h := NewAuthHandler(st, []byte("0123456789abcdef0123456789abcdef"), "Server-Password-123!", time.Hour)
+	h := NewAuthHandler(st, []byte("0123456789abcdef0123456789abcdef"), "Server-Password-123!", time.Hour, "")
 
 	wrongReq := httptest.NewRequest(http.MethodPost, "/api/auth/login", bytes.NewBufferString(`{"password":"attacker-password"}`))
 	wrongResp := httptest.NewRecorder()
