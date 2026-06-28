@@ -7,12 +7,12 @@ services:
       - "8080:8080"
     environment:
       - LISTEN_ADDR=:8080
-      - JWT_SECRET=change-me-to-a-random-string-in-production
-      - INITIAL_PASSWORD=admin123
+      - JWT_SECRET=${JWT_SECRET:?set JWT_SECRET to a random value of at least 32 characters}
+      - INITIAL_PASSWORD=${INITIAL_PASSWORD:?set INITIAL_PASSWORD to a strong admin password}
       - DB_PATH=/app/data/blog.db
       - UPLOAD_DIR=/app/uploads
       - LOG_LEVEL=info
-      - CORS_ORIGINS=http://localhost:3000
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3000}
       - MAX_FILE_SIZE=52428800
       - MAX_TOTAL_SIZE=104857600
     volumes:

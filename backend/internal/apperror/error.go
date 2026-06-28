@@ -20,6 +20,7 @@ const (
 	ErrConflict         ErrorCode = "CONFLICT"
 	ErrPayloadTooLarge  ErrorCode = "PAYLOAD_TOO_LARGE"
 	ErrUnsupportedMedia ErrorCode = "UNSUPPORTED_MEDIA_TYPE"
+	ErrRateLimited      ErrorCode = "RATE_LIMITED"
 	ErrInternal         ErrorCode = "INTERNAL_ERROR"
 )
 
@@ -29,11 +30,11 @@ const (
 // The underlying error (Err) is never serialized to the client — it is
 // logged server-side only, preventing information leakage.
 type AppError struct {
-	Code    ErrorCode              `json:"code"`
-	Message string                 `json:"message"`
-	Details map[string]any         `json:"details,omitempty"`
-	Err     error                  `json:"-"`
-	Status  int                    `json:"-"`
+	Code    ErrorCode      `json:"code"`
+	Message string         `json:"message"`
+	Details map[string]any `json:"details,omitempty"`
+	Err     error          `json:"-"`
+	Status  int            `json:"-"`
 }
 
 // Error implements the error interface.
@@ -64,6 +65,8 @@ func StatusCodeToErrorCode(status int) ErrorCode {
 		return ErrPayloadTooLarge
 	case status == http.StatusUnsupportedMediaType:
 		return ErrUnsupportedMedia
+	case status == http.StatusTooManyRequests:
+		return ErrRateLimited
 	default:
 		return ErrInternal
 	}
@@ -145,6 +148,18 @@ func UnsupportedMedia(msg string) *AppError {
 		Code:    ErrUnsupportedMedia,
 		Message: msg,
 		Status:  http.StatusUnsupportedMediaType,
+	}
+}
+
+// TooManyRequests creates a 429 error.
+func TooManyRequests(msg string) *AppError {
+	if msg == "" {
+		msg = "too many requests"
+	}
+	return &AppError{
+		Code:    ErrRateLimited,
+		Message: msg,
+		Status:  http.StatusTooManyRequests,
 	}
 }
 

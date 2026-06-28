@@ -6,6 +6,7 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"time"
 
 	"blog-api/internal/apperror"
 	"blog-api/internal/auth"
@@ -14,14 +15,20 @@ import (
 
 // AuthHandler handles authentication endpoints.
 type AuthHandler struct {
-	store  *store.Store
-	secret []byte
-	expiry int // seconds
+	store           *store.Store
+	secret          []byte
+	initialPassword string
+	tokenExpiry     time.Duration
 }
 
 // NewAuthHandler creates an AuthHandler.
-func NewAuthHandler(s *store.Store, jwtSecret []byte, expiry int) *AuthHandler {
-	return &AuthHandler{store: s, secret: jwtSecret, expiry: expiry}
+func NewAuthHandler(s *store.Store, jwtSecret []byte, initialPassword string, tokenExpiry time.Duration) *AuthHandler {
+	return &AuthHandler{
+		store:           s,
+		secret:          jwtSecret,
+		initialPassword: initialPassword,
+		tokenExpiry:     tokenExpiry,
+	}
 }
 
 // LoginRequest is the expected JSON body for POST /api/auth/login.
@@ -56,8 +63,8 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) error {
 	var storedHash string
 	err = h.store.DB().QueryRowContext(r.Context(), `SELECT password_hash FROM auth WHERE id = 1`).Scan(&storedHash)
 	if err == sql.ErrNoRows || storedHash == "" {
-		// First run — hash and store the given password.
-		hash, hashErr := auth.HashPassword(req.Password)
+		// First run: initialize from trusted server-side configuration only.
+		hash, hashErr := auth.HashPassword(h.initialPassword)
 		if hashErr != nil {
 			return apperror.Internal("failed to hash password", hashErr)
 		}
@@ -79,7 +86,11 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	// Sign a JWT.
-	token, err := auth.SignToken(h.secret, auth.DefaultTokenExpiry)
+	expiry := h.tokenExpiry
+	if expiry <= 0 {
+		expiry = auth.DefaultTokenExpiry
+	}
+	token, err := auth.SignToken(h.secret, expiry)
 	if err != nil {
 		return apperror.Internal("failed to sign token", err)
 	}

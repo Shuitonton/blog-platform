@@ -37,17 +37,16 @@ const (
 
 // allowedMIMETypes is the whitelist of acceptable MIME types for uploaded images.
 var allowedMIMETypes = map[string]bool{
-	"image/jpeg":    true,
-	"image/png":     true,
-	"image/gif":     true,
-	"image/webp":    true,
-	"image/svg+xml": true,
+	"image/jpeg": true,
+	"image/png":  true,
+	"image/gif":  true,
+	"image/webp": true,
 }
 
 // allowedExtensions is the whitelist of acceptable file extensions (lowercase).
 var allowedExtensions = map[string]bool{
 	".jpg": true, ".jpeg": true, ".png": true,
-	".gif": true, ".webp": true, ".svg": true,
+	".gif": true, ".webp": true,
 }
 
 // ---- TempFile ----

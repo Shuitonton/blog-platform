@@ -51,7 +51,7 @@ func main() {
 	handler.CleanTempDir(cfg.UploadDir + "/tmp")
 
 	// Build handlers.
-	authHandler := handler.NewAuthHandler(st, []byte(cfg.JWTSecret), 0)
+	authHandler := handler.NewAuthHandler(st, []byte(cfg.JWTSecret), cfg.InitialPassword, cfg.TokenExpiry)
 	blogHandler := handler.NewBlogHandler(st, cfg.UploadDir)
 	simpleHandler := handler.NewSimpleHandler(st)
 	uploadHandler := handler.NewUploadHandler(st, cfg.UploadDir)
@@ -62,6 +62,7 @@ func main() {
 	// Middleware stack (order matters — outermost first).
 	r.Use(middleware.Recovery)
 	r.Use(middleware.Logger(logger))
+	r.Use(middleware.SecurityHeaders)
 	r.Use(middleware.CORS(cfg.CORSOrigins))
 
 	// Public routes (no auth required).
@@ -81,7 +82,7 @@ func main() {
 	r.Handle("/uploads/*", handler.ServeStatic(cfg.UploadDir))
 
 	// Auth route (no auth required).
-	r.Post("/api/auth/login", toHTTPHandler(authHandler.Login))
+	r.With(middleware.RateLimit(10, time.Minute)).Post("/api/auth/login", toHTTPHandler(authHandler.Login))
 
 	// Protected routes (auth required).
 	r.Group(func(r chi.Router) {

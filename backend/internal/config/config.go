@@ -3,6 +3,7 @@
 package config
 
 import (
+	"fmt"
 	"log/slog"
 	"os"
 	"strconv"
@@ -40,24 +41,33 @@ type Config struct {
 // It returns an error if required values are missing.
 func Load() (*Config, error) {
 	cfg := &Config{
-		ListenAddr:     getEnv("LISTEN_ADDR", ":8080"),
-		DBPath:         getEnv("DB_PATH", "data/blog.db"),
-		UploadDir:      getEnv("UPLOAD_DIR", "uploads"),
-		MaxFileSize:    getEnvInt64("MAX_FILE_SIZE", 50*1024*1024),   // 50 MB
-		MaxTotalSize:   getEnvInt64("MAX_TOTAL_SIZE", 100*1024*1024),  // 100 MB
-		MaxFilesCount:  getEnvInt("MAX_FILES_COUNT", 20),
-		JWTSecret:      os.Getenv("JWT_SECRET"),
-		InitialPassword: getEnv("INITIAL_PASSWORD", "admin123"),
-		TokenExpiry:    getEnvDuration("TOKEN_EXPIRY", 24*time.Hour),
-		CORSOrigins:    parseCORSOrigins(getEnv("CORS_ORIGINS", "*")),
-		LogLevel:       parseLogLevel(getEnv("LOG_LEVEL", "info")),
+		ListenAddr:      getEnv("LISTEN_ADDR", ":8080"),
+		DBPath:          getEnv("DB_PATH", "data/blog.db"),
+		UploadDir:       getEnv("UPLOAD_DIR", "uploads"),
+		MaxFileSize:     getEnvInt64("MAX_FILE_SIZE", 50*1024*1024),   // 50 MB
+		MaxTotalSize:    getEnvInt64("MAX_TOTAL_SIZE", 100*1024*1024), // 100 MB
+		MaxFilesCount:   getEnvInt("MAX_FILES_COUNT", 20),
+		JWTSecret:       os.Getenv("JWT_SECRET"),
+		InitialPassword: os.Getenv("INITIAL_PASSWORD"),
+		TokenExpiry:     getEnvDuration("TOKEN_EXPIRY", 24*time.Hour),
+		CORSOrigins:     parseCORSOrigins(getEnv("CORS_ORIGINS", "http://localhost:3000")),
+		LogLevel:        parseLogLevel(getEnv("LOG_LEVEL", "info")),
 	}
 
 	if cfg.JWTSecret == "" {
 		return nil, &ConfigError{Field: "JWT_SECRET", Message: "must be set and non-empty"}
 	}
+	if isUnsafeSecret(cfg.JWTSecret) {
+		return nil, &ConfigError{Field: "JWT_SECRET", Message: "must be changed from the development default"}
+	}
+	if len(cfg.JWTSecret) < 32 {
+		return nil, &ConfigError{Field: "JWT_SECRET", Message: "must be at least 32 characters"}
+	}
 	if cfg.InitialPassword == "" {
 		return nil, &ConfigError{Field: "INITIAL_PASSWORD", Message: "must be set and non-empty"}
+	}
+	if isUnsafePassword(cfg.InitialPassword) {
+		return nil, &ConfigError{Field: "INITIAL_PASSWORD", Message: "must be changed from the development default"}
 	}
 
 	return cfg, nil
@@ -70,7 +80,7 @@ type ConfigError struct {
 }
 
 func (e *ConfigError) Error() string {
-	return "config error: " + e.Field + " — " + e.Message
+	return fmt.Sprintf("config error: %s: %s", e.Field, e.Message)
 }
 
 // ---- env helpers ----
@@ -143,5 +153,23 @@ func parseLogLevel(raw string) slog.Level {
 		return slog.LevelError
 	default:
 		return slog.LevelInfo
+	}
+}
+
+func isUnsafeSecret(secret string) bool {
+	switch strings.TrimSpace(secret) {
+	case "change-me-to-a-random-string-in-production", "change-me", "secret", "jwt-secret":
+		return true
+	default:
+		return false
+	}
+}
+
+func isUnsafePassword(password string) bool {
+	switch strings.TrimSpace(password) {
+	case "admin", "admin123", "password", "123456", "change-me":
+		return true
+	default:
+		return false
 	}
 }

@@ -87,8 +87,42 @@ func ServeStatic(uploadDir string) http.Handler {
 		panic(fmt.Sprintf("cannot create upload directory %s: %v", uploadDir, err))
 	}
 
-	fs := http.FileServer(http.Dir(uploadDir))
-	return http.StripPrefix("/uploads/", fs)
+	base, err := filepath.Abs(uploadDir)
+	if err != nil {
+		panic(fmt.Sprintf("cannot resolve upload directory %s: %v", uploadDir, err))
+	}
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		name := strings.TrimPrefix(r.URL.Path, "/uploads/")
+		if name == "" || strings.Contains(name, "\x00") {
+			http.NotFound(w, r)
+			return
+		}
+
+		cleanName := filepath.Clean(name)
+		if cleanName == "." || strings.HasPrefix(cleanName, ".."+string(filepath.Separator)) || cleanName == ".." {
+			http.NotFound(w, r)
+			return
+		}
+
+		target := filepath.Join(base, cleanName)
+		if !strings.HasPrefix(target, base+string(filepath.Separator)) && target != base {
+			http.NotFound(w, r)
+			return
+		}
+
+		info, statErr := os.Stat(target)
+		if statErr != nil || info.IsDir() {
+			http.NotFound(w, r)
+			return
+		}
+
+		w.Header().Set("X-Content-Type-Options", "nosniff")
+		if strings.EqualFold(filepath.Ext(target), ".svg") {
+			w.Header().Set("Content-Disposition", `attachment; filename="`+filepath.Base(target)+`"`)
+		}
+		http.ServeFile(w, r, target)
+	})
 }
 
 // CleanTempDir removes all files in the temp directory. Called on startup.
