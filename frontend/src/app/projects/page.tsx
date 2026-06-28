@@ -1,12 +1,11 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'motion/react'
 import { toast } from 'sonner'
 import { ProjectCard, type Project } from './components/project-card'
 import CreateDialog from './components/create-dialog'
 import { pushProjects } from './services/push-projects'
-import { getAuthToken } from '@/lib/auth'
 import { useAuthStore } from '@/hooks/use-auth'
 import { useConfigStore } from '@/app/(home)/stores/config-store'
 import { apiGet } from '@/lib/api-client'
@@ -14,8 +13,8 @@ import type { ImageItem } from './components/image-upload-dialog'
 import seedProjects from './list.json'
 
 export default function Page() {
-	const [projects, setProjects] = useState<Project[]>([])
-	const [originalProjects, setOriginalProjects] = useState<Project[]>([])
+	const [projects, setProjects] = useState<Project[]>(seedProjects as Project[])
+	const [originalProjects, setOriginalProjects] = useState<Project[]>(seedProjects as Project[])
 	const [isEditMode, setIsEditMode] = useState(false)
 	const [isSaving, setIsSaving] = useState(false)
 	const [editingProject, setEditingProject] = useState<Project | null>(null)
@@ -26,14 +25,13 @@ export default function Page() {
 	const { siteContent } = useConfigStore()
 	const hideEditButton = siteContent.hideEditButton ?? false
 
+	// 首次加载时从后端同步最新数据
 	useEffect(() => {
 		apiGet<Project[]>('/projects').then(data => {
 			if (Array.isArray(data) && data.length > 0) {
 				setProjects(data); setOriginalProjects(data)
-			} else {
-				setProjects(seedProjects as Project[]); setOriginalProjects(seedProjects as Project[])
 			}
-		}).catch(() => { setProjects(seedProjects as Project[]); setOriginalProjects(seedProjects as Project[]) })
+		}).catch(() => {})
 	}, [])
 
 	const handleUpdate = (updated: Project, old: Project, imageItem?: ImageItem) => {
@@ -43,9 +41,12 @@ export default function Page() {
 		}
 	}
 	const handleAdd = () => { setEditingProject(null); setIsCreateDialogOpen(true) }
-	const handleSaveProject = (p: Project) => {
+	const handleSaveProject = (p: Project, imageItem?: ImageItem) => {
 		if (editingProject) setProjects(prev => prev.map(x => (x.url === editingProject.url ? p : x)))
 		else setProjects(prev => [...prev, p])
+		if (imageItem) {
+			setImageItems(prev => { const m = new Map(prev); m.set(p.url, imageItem); return m })
+		}
 	}
 	const handleDelete = (project: Project) => {
 		if (confirm(`删除 ${project.name || project.url}？`)) setProjects(prev => prev.filter(p => p.url !== project.url))
@@ -54,10 +55,9 @@ export default function Page() {
 	const handleSave = async () => {
 		setIsSaving(true)
 		try {
-			const token = getAuthToken()
-			if (!token) { toast.error('请先登录'); return }
-			await pushProjects({ projects, imageItems })
-			setOriginalProjects(projects)
+			const savedProjects = await pushProjects({ projects, imageItems })
+			setProjects(savedProjects)
+			setOriginalProjects(savedProjects)
 			setImageItems(new Map())
 			setIsEditMode(false)
 			toast.success('保存成功！')

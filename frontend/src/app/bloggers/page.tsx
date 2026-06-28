@@ -6,7 +6,6 @@ import { toast } from 'sonner'
 import GridView, { type Blogger } from './grid-view'
 import CreateDialog from './components/create-dialog'
 import { pushBloggers } from './services/push-bloggers'
-import { getAuthToken } from '@/lib/auth'
 import { useAuthStore } from '@/hooks/use-auth'
 import { useConfigStore } from '@/app/(home)/stores/config-store'
 import { apiGet } from '@/lib/api-client'
@@ -14,8 +13,8 @@ import type { AvatarItem } from './components/avatar-upload-dialog'
 import seedBloggers from './list.json'
 
 export default function Page() {
-	const [bloggers, setBloggers] = useState<Blogger[]>([])
-	const [originalBloggers, setOriginalBloggers] = useState<Blogger[]>([])
+	const [bloggers, setBloggers] = useState<Blogger[]>(seedBloggers as Blogger[])
+	const [originalBloggers, setOriginalBloggers] = useState<Blogger[]>(seedBloggers as Blogger[])
 	const [isEditMode, setIsEditMode] = useState(false)
 	const [isSaving, setIsSaving] = useState(false)
 	const [editingBlogger, setEditingBlogger] = useState<Blogger | null>(null)
@@ -26,11 +25,11 @@ export default function Page() {
 	const { siteContent } = useConfigStore()
 	const hideEditButton = siteContent.hideEditButton ?? false
 
+	// 首次加载时从后端同步最新数据
 	useEffect(() => {
 		apiGet<Blogger[]>('/bloggers').then(data => {
 			if (Array.isArray(data) && data.length > 0) { setBloggers(data); setOriginalBloggers(data) }
-			else { setBloggers(seedBloggers as Blogger[]); setOriginalBloggers(seedBloggers as Blogger[]) }
-		}).catch(() => { setBloggers(seedBloggers as Blogger[]); setOriginalBloggers(seedBloggers as Blogger[]) })
+		}).catch(() => {})
 	}, [])
 
 	const handleUpdate = (updated: Blogger, old: Blogger, avatarItem?: AvatarItem) => {
@@ -38,9 +37,12 @@ export default function Page() {
 		if (avatarItem) { const m = new Map(avatarItems); m.set(updated.url, avatarItem); setAvatarItems(m) }
 	}
 	const handleAdd = () => { setEditingBlogger(null); setIsCreateDialogOpen(true) }
-	const handleSaveBlogger = (b: Blogger) => {
+	const handleSaveBlogger = (b: Blogger, avatarItem?: AvatarItem) => {
 		if (editingBlogger) setBloggers(prev => prev.map(x => (x.url === editingBlogger.url ? b : x)))
 		else setBloggers(prev => [...prev, b])
+		if (avatarItem) {
+			setAvatarItems(prev => { const m = new Map(prev); m.set(b.url, avatarItem); return m })
+		}
 	}
 	const handleDelete = (b: Blogger) => {
 		if (confirm(`删除 ${b.name}？`)) setBloggers(prev => prev.filter(x => x.url !== b.url))
@@ -49,10 +51,8 @@ export default function Page() {
 	const handleSave = async () => {
 		setIsSaving(true)
 		try {
-			const token = getAuthToken()
-			if (!token) { toast.error('请先登录'); return }
-			await pushBloggers({ bloggers, avatarItems })
-			setOriginalBloggers(bloggers); setAvatarItems(new Map()); setIsEditMode(false)
+			const savedBloggers = await pushBloggers({ bloggers, avatarItems })
+			setBloggers(savedBloggers); setOriginalBloggers(savedBloggers); setAvatarItems(new Map()); setIsEditMode(false)
 			toast.success('保存成功！')
 		} catch (error: any) { toast.error(`保存失败: ${error?.message||'未知错误'}`) }
 		finally { setIsSaving(false) }

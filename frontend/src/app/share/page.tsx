@@ -7,7 +7,6 @@ import GridView from './grid-view'
 import type { Share } from './components/share-card'
 import CreateDialog from './components/create-dialog'
 import { pushShares } from './services/push-shares'
-import { getAuthToken } from '@/lib/auth'
 import { useAuthStore } from '@/hooks/use-auth'
 import { useConfigStore } from '@/app/(home)/stores/config-store'
 import { apiGet } from '@/lib/api-client'
@@ -15,8 +14,8 @@ import type { LogoItem } from './components/logo-upload-dialog'
 import seedShares from './list.json'
 
 export default function Page() {
-	const [shares, setShares] = useState<Share[]>([])
-	const [originalShares, setOriginalShares] = useState<Share[]>([])
+	const [shares, setShares] = useState<Share[]>(seedShares as Share[])
+	const [originalShares, setOriginalShares] = useState<Share[]>(seedShares as Share[])
 	const [isEditMode, setIsEditMode] = useState(false)
 	const [isSaving, setIsSaving] = useState(false)
 	const [editingShare, setEditingShare] = useState<Share | null>(null)
@@ -27,11 +26,11 @@ export default function Page() {
 	const { siteContent } = useConfigStore()
 	const hideEditButton = siteContent.hideEditButton ?? false
 
+	// 首次加载时从后端同步最新数据
 	useEffect(() => {
 		apiGet<Share[]>('/shares').then(data => {
 			if (Array.isArray(data) && data.length > 0) { setShares(data); setOriginalShares(data) }
-			else { setShares(seedShares as Share[]); setOriginalShares(seedShares as Share[]) }
-		}).catch(() => { setShares(seedShares as Share[]); setOriginalShares(seedShares as Share[]) })
+		}).catch(() => {})
 	}, [])
 
 	const handleUpdate = (updated: Share, old: Share, logoItem?: LogoItem) => {
@@ -39,9 +38,12 @@ export default function Page() {
 		if (logoItem) { const m = new Map(logoItems); m.set(updated.url, logoItem); setLogoItems(m) }
 	}
 	const handleAdd = () => { setEditingShare(null); setIsCreateDialogOpen(true) }
-	const handleSaveShare = (s: Share) => {
+	const handleSaveShare = (s: Share, logoItem?: LogoItem) => {
 		if (editingShare) setShares(prev => prev.map(x => (x.url === editingShare.url ? s : x)))
 		else setShares(prev => [...prev, s])
+		if (logoItem) {
+			setLogoItems(prev => { const m = new Map(prev); m.set(s.url, logoItem); return m })
+		}
 	}
 	const handleDelete = (s: Share) => {
 		if (confirm(`删除 ${s.name}？`)) setShares(prev => prev.filter(x => x.url !== s.url))
@@ -50,10 +52,8 @@ export default function Page() {
 	const handleSave = async () => {
 		setIsSaving(true)
 		try {
-			const token = getAuthToken()
-			if (!token) { toast.error('请先登录'); return }
-			await pushShares({ shares, logoItems })
-			setOriginalShares(shares); setLogoItems(new Map()); setIsEditMode(false)
+			const savedShares = await pushShares({ shares, logoItems })
+			setShares(savedShares); setOriginalShares(savedShares); setLogoItems(new Map()); setIsEditMode(false)
 			toast.success('保存成功！')
 		} catch (error: any) { toast.error(`保存失败: ${error?.message||'未知错误'}`) }
 		finally { setIsSaving(false) }

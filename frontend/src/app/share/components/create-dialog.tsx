@@ -10,7 +10,7 @@ import { DialogModal } from '@/components/dialog-modal'
 interface CreateDialogProps {
 	share: Share | null
 	onClose: () => void
-	onSave: (share: Share) => void
+	onSave: (share: Share, logoItem?: LogoItem) => void
 }
 
 export default function CreateDialog({ share, onClose, onSave }: CreateDialogProps) {
@@ -24,11 +24,13 @@ export default function CreateDialog({ share, onClose, onSave }: CreateDialogPro
 	})
 	const [showLogoDialog, setShowLogoDialog] = useState(false)
 	const [tagsInput, setTagsInput] = useState('')
+	const [selectedLogoItem, setSelectedLogoItem] = useState<LogoItem | null>(null)
 
 	useEffect(() => {
 		if (share) {
 			setFormData(share)
 			setTagsInput(share.tags.join(', '))
+			setSelectedLogoItem(null)
 		} else {
 			setFormData({
 				name: '',
@@ -39,10 +41,12 @@ export default function CreateDialog({ share, onClose, onSave }: CreateDialogPro
 				stars: 3
 			})
 			setTagsInput('')
+			setSelectedLogoItem(null)
 		}
 	}, [share])
 
 	const handleLogoSubmit = (logo: LogoItem) => {
+		setSelectedLogoItem(logo)
 		const logoUrl = logo.type === 'url' ? logo.url : logo.previewUrl
 		setFormData({ ...formData, logo: logoUrl })
 	}
@@ -67,7 +71,7 @@ export default function CreateDialog({ share, onClose, onSave }: CreateDialogPro
 			return
 		}
 
-		onSave(formData)
+		onSave(formData, selectedLogoItem ?? undefined)
 		onClose()
 		toast.success(share ? '更新成功' : '添加成功')
 	}
