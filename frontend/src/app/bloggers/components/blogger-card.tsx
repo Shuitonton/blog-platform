@@ -6,7 +6,7 @@ import { useSize } from '@/hooks/use-size'
 import { cn } from '@/lib/utils'
 import EditableStarRating from '@/components/editable-star-rating'
 import { Blogger, type BloggerStatus } from '../grid-view'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import AvatarUploadDialog, { type AvatarItem } from './avatar-upload-dialog'
 
 interface BloggerCardProps {
@@ -23,6 +23,12 @@ export function BloggerCard({ blogger, isEditMode = false, onUpdate, onDelete }:
 	const [localBlogger, setLocalBlogger] = useState(blogger)
 	const [showAvatarDialog, setShowAvatarDialog] = useState(false)
 	const [avatarItem, setAvatarItem] = useState<AvatarItem | null>(null)
+
+	useEffect(() => {
+		if (!isEditing) {
+			setLocalBlogger(blogger)
+		}
+	}, [blogger, isEditing])
 
 	const handleFieldChange = (field: keyof Blogger, value: any) => {
 		const updated = { ...localBlogger, [field]: value }

@@ -8,6 +8,12 @@ export type PushProjectsParams = {
 	projects: Project[]
 	imageItems?: Map<string, ImageItem>
 }
+function assertNoBlobUrls(items: Project[]): void {
+	const invalidItem = items.find(item => item.image.startsWith('blob:'))
+	if (invalidItem) {
+		throw new Error('项目图片仍是浏览器临时地址，请重新选择图片并等待上传完成后再保存')
+	}
+}
 
 export async function pushProjects(params: PushProjectsParams): Promise<Project[]> {
 	const { projects, imageItems } = params
@@ -30,6 +36,7 @@ export async function pushProjects(params: PushProjectsParams): Promise<Project[
 	}
 
 	toast.info('正在保存项目列表...')
+	assertNoBlobUrls(savedProjects)
 	await apiPut('/projects', savedProjects)
 	toast.success('保存成功！')
 	return savedProjects

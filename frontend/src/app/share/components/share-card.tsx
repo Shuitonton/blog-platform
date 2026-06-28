@@ -5,7 +5,7 @@ import StarRating from '@/components/star-rating'
 import { useSize } from '@/hooks/use-size'
 import { cn } from '@/lib/utils'
 import EditableStarRating from '@/components/editable-star-rating'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import LogoUploadDialog, { type LogoItem } from './logo-upload-dialog'
 
 export interface Share {
@@ -31,6 +31,12 @@ export function ShareCard({ share, isEditMode = false, onUpdate, onDelete }: Sha
 	const [localShare, setLocalShare] = useState(share)
 	const [showLogoDialog, setShowLogoDialog] = useState(false)
 	const [logoItem, setLogoItem] = useState<LogoItem | null>(null)
+
+	useEffect(() => {
+		if (!isEditing) {
+			setLocalShare(share)
+		}
+	}, [share, isEditing])
 
 	const handleFieldChange = (field: keyof Share, value: any) => {
 		const updated = { ...localShare, [field]: value }

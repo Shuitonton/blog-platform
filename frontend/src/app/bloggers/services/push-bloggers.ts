@@ -8,6 +8,12 @@ export type PushBloggersParams = {
 	bloggers: Blogger[]
 	avatarItems?: Map<string, AvatarItem>
 }
+function assertNoBlobUrls(items: Blogger[]): void {
+	const invalidItem = items.find(item => item.avatar.startsWith('blob:'))
+	if (invalidItem) {
+		throw new Error('博主头像仍是浏览器临时地址，请重新选择图片并等待上传完成后再保存')
+	}
+}
 
 export async function pushBloggers(params: PushBloggersParams): Promise<Blogger[]> {
 	const { bloggers, avatarItems } = params
@@ -30,6 +36,7 @@ export async function pushBloggers(params: PushBloggersParams): Promise<Blogger[
 	}
 
 	toast.info('正在保存友链...')
+	assertNoBlobUrls(savedBloggers)
 	await apiPut('/bloggers', savedBloggers)
 	toast.success('保存成功！')
 	return savedBloggers
